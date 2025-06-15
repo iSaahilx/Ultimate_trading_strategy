@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout + Trendlyne Combined Analysis Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .summary-card h3 {
+            color: #495057;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 4px;
+        }
+        
+        .summary-card p {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th:hover {
+            background: #e9ecef;
+        }
+        
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9rem;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .rank {
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .score {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-align: center;
+            min-width: 50px;
+            display: inline-block;
+        }
+        
+        .score-excellent { background: #d4edda; color: #155724; }
+        .score-good { background: #d1ecf1; color: #0c5460; }
+        .score-average { background: #fff3cd; color: #856404; }
+        .score-poor { background: #f8d7da; color: #721c24; }
+        .score-bad { background: #f5c6cb; color: #721c24; }
+        
+        .signal {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-align: center;
+            min-width: 70px;
+            display: inline-block;
+        }
+        
+        .signal-buy { background: #d4edda; color: #155724; }
+        .signal-hold { background: #fff3cd; color: #856404; }
+        .signal-sell { background: #f8d7da; color: #721c24; }
+        
+        .breakout-badge {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+        
+        .page-btn {
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .page-btn:hover {
+            background: #0056b3;
+        }
+        
+        .page-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5rem; }
+            .controls-row { flex-direction: column; align-items: stretch; }
+            .control-group { margin-bottom: 10px; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 8px 4px; }
+            .summary-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Breakout + Trendlyne Combined Analysis</h1>
+            <p>Technical Breakout Signals + Comprehensive Fundamental Analysis</p>
+            <p>Generated on June 15, 2025 at 11:31 AM</p>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>Total Companies</h3>
+                <div class="number">8</div>
+                <p>With Breakout Signals</p>
+            </div>
+            <div class="summary-card">
+                <h3>Avg Composite Score</h3>
+                <div class="number">15.0</div>
+                <p>Combined Rating</p>
+            </div>
+            <div class="summary-card">
+                <h3>Avg QSS Score</h3>
+                <div class="number">9.4</div>
+                <p>Technical Analysis</p>
+            </div>
+            <div class="summary-card">
+                <h3>Avg Fund Score</h3>
+                <div class="number">25.5</div>
+                <p>Fundamental Analysis</p>
+            </div>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>BUY Signals</h3>
+                <div class="number">3</div>
+                <p>37.5% of companies</p>
+            </div>
+            <div class="summary-card">
+                <h3>HOLD Signals</h3>
+                <div class="number">3</div>
+                <p>37.5% of companies</p>
+            </div>
+            <div class="summary-card">
+                <h3>SELL Signals</h3>
+                <div class="number">2</div>
+                <p>25.0% of companies</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="searchInput">Search Companies:</label>
+                    <input type="text" id="searchInput" placeholder="Search by name, NSE code, or industry...">
+                </div>
+                <div class="control-group">
+                    <label for="itemsPerPage">Items per page:</label>
+                    <select id="itemsPerPage">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="all">Show All</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="minScore">Min Composite Score:</label>
+                    <input type="number" id="minScore" value="0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <button onclick="exportToCSV()">Export CSV</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="companiesTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('rank')" data-column="rank">Rank</th>
+                        <th onclick="sortTable('stock_name')" data-column="stock_name">Company</th>
+                        <th onclick="sortTable('nse_code')" data-column="nse_code">NSE Code</th>
+                        <th onclick="sortTable('composite_score')" data-column="composite_score">Composite</th>
+                        <th onclick="sortTable('technical_score')" data-column="technical_score">QSS Score</th>
+                        <th onclick="sortTable('enhanced_fundamental_score')" data-column="enhanced_fundamental_score">Fund Score</th>
+                        <th onclick="sortTable('trade_recommendation')" data-column="trade_recommendation">Signal</th>
+                        <th onclick="sortTable('latest_close')" data-column="latest_close">Price</th>
+                        <th onclick="sortTable('market_cap')" data-column="market_cap">Market Cap</th>
+                        <th onclick="sortTable('pe_ratio')" data-column="pe_ratio">PE Ratio</th>
+                        <th onclick="sortTable('revenue_growth')" data-column="revenue_growth">Revenue Growth</th>
+                        <th onclick="sortTable('promoter_holding')" data-column="promoter_holding">Promoter %</th>
+                        <th>Breakout</th>
+                    </tr>
+                </thead>
+                <tbody id="companiesTableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="pagination"></div>
+    </div>
+    
+    <script>
+        // Companies data
+        const companiesData = [
+  {
+    "symbol":"BBNPPGOLD",
+    "instrument_token":5260033,
+    "signal":true,
+    "latest_close":97.25,
+    "latest_high":98.95,
+    "latest_low":95.7,
+    "latest_range":3.25,
+    "weekly_open":96.05,
+    "monthly_open":92.55,
+    "volume_ema":3320.6057388829,
+    "latest_volume":8907.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"BBNPPGOLD",
+    "stock_name":"Baroda BNP Paribas Gold ETF",
+    "nse_code":"BBNPPGOLD",
+    "composite_score":28.4706972707,
+    "technical_score":39.25,
+    "enhanced_fundamental_score":8.451992202,
+    "qss":39.25,
+    "trade_recommendation":"WEAK BUY",
+    "signal_strength":"Moderate Bullish",
+    "momentum_score":50,
+    "trend_score":35.0,
+    "price_action_score":25,
+    "rsi":56.94,
+    "macd":0.78,
+    "adx":33.99,
+    "atr":2.07,
+    "mfi":40.94,
+    "vwap":0.0,
+    "delivery_pct":95.89,
+    "revenue_qoq_growth":0.0,
+    "profit_qoq_growth":0.0,
+    "revenue_consistency":"0\/6",
+    "profit_consistency":"0\/6",
+    "revenue_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "profit_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "industry":"Others",
+    "market_cap":0.0,
+    "current_price":95.35,
+    "roce":0.0,
+    "pe_ratio":0.0,
+    "peg_ratio":0.0,
+    "promoter_holding":0.0,
+    "component_scores":{
+      "operating_profit":0.0,
+      "operating_revenue":0.0,
+      "peg_score":0,
+      "market_cap_score":100,
+      "margin_score":69.0398440406,
+      "pe_score":0,
+      "promoter_score":0
+    },
+    "nse_code_clean":"BBNPPGOLD"
+  },
+  {
+    "symbol":"GROWWGOLD",
+    "instrument_token":6623233,
+    "signal":true,
+    "latest_close":98.4,
+    "latest_high":99.38,
+    "latest_low":97.22,
+    "latest_range":2.16,
+    "weekly_open":95.52,
+    "monthly_open":94.84,
+    "volume_ema":180374.5204788588,
+    "latest_volume":676790.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"GROWWGOLD",
+    "stock_name":"Groww Gold ETF",
+    "nse_code":"GROWWGOLD",
+    "composite_score":25.3831972707,
+    "technical_score":34.5,
+    "enhanced_fundamental_score":8.451992202,
+    "qss":34.5,
+    "trade_recommendation":"WEAK BUY",
+    "signal_strength":"Moderate Bullish",
+    "momentum_score":60,
+    "trend_score":8.3333333333,
+    "price_action_score":20,
+    "rsi":56.97,
+    "macd":0.76,
+    "adx":16.22,
+    "atr":1.69,
+    "mfi":70.01,
+    "vwap":96.41,
+    "delivery_pct":81.09,
+    "revenue_qoq_growth":0.0,
+    "profit_qoq_growth":0.0,
+    "revenue_consistency":"0\/6",
+    "profit_consistency":"0\/6",
+    "revenue_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "profit_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "industry":"Others",
+    "market_cap":0.0,
+    "current_price":96.53,
+    "roce":0.0,
+    "pe_ratio":0.0,
+    "peg_ratio":0.0,
+    "promoter_holding":0.0,
+    "component_scores":{
+      "operating_profit":0.0,
+      "operating_revenue":0.0,
+      "peg_score":0,
+      "market_cap_score":100,
+      "margin_score":69.0398440406,
+      "pe_score":0,
+      "promoter_score":0
+    },
+    "nse_code_clean":"GROWWGOLD"
+  },
+  {
+    "symbol":"EGOLD",
+    "instrument_token":5102849,
+    "signal":true,
+    "latest_close":100.55,
+    "latest_high":101.45,
+    "latest_low":99.0,
+    "latest_range":2.45,
+    "weekly_open":98.4,
+    "monthly_open":96.85,
+    "volume_ema":130636.7183188343,
+    "latest_volume":192913.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"EGOLD",
+    "stock_name":"Edelweiss Gold ETF",
+    "nse_code":"EGOLD",
+    "composite_score":14.8206972707,
+    "technical_score":18.25,
+    "enhanced_fundamental_score":8.451992202,
+    "qss":18.25,
+    "trade_recommendation":"WEAK BUY",
+    "signal_strength":"Moderate Bullish",
+    "momentum_score":20,
+    "trend_score":10.0,
+    "price_action_score":25,
+    "rsi":55.54,
+    "macd":0.77,
+    "adx":10.07,
+    "atr":1.56,
+    "mfi":59.97,
+    "vwap":0.0,
+    "delivery_pct":99.39,
+    "revenue_qoq_growth":0.0,
+    "profit_qoq_growth":0.0,
+    "revenue_consistency":"0\/6",
+    "profit_consistency":"0\/6",
+    "revenue_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "profit_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "industry":"Others",
+    "market_cap":0.0,
+    "current_price":98.0,
+    "roce":0.0,
+    "pe_ratio":0.0,
+    "peg_ratio":0.0,
+    "promoter_holding":0.0,
+    "component_scores":{
+      "operating_profit":0.0,
+      "operating_revenue":0.0,
+      "peg_score":0,
+      "market_cap_score":100,
+      "margin_score":69.0398440406,
+      "pe_score":0,
+      "promoter_score":0
+    },
+    "nse_code_clean":"EGOLD"
+  },
+  {
+    "symbol":"JUBLINGREA",
+    "instrument_token":712449,
+    "signal":true,
+    "latest_close":793.55,
+    "latest_high":806.0,
+    "latest_low":690.0,
+    "latest_range":116.0,
+    "weekly_open":707.05,
+    "monthly_open":702.95,
+    "volume_ema":2937037.2815094786,
+    "latest_volume":26851921.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"JUBLINGREA",
+    "stock_name":"Jubilant Ingrevia Ltd.",
+    "nse_code":"JUBLINGREA",
+    "composite_score":11.866320581,
+    "technical_score":-11.4,
+    "enhanced_fundamental_score":55.07520166,
+    "qss":-11.4,
+    "trade_recommendation":"WEAK SELL",
+    "signal_strength":"Moderate Bearish",
+    "momentum_score":-17,
+    "trend_score":-8.3333333333,
+    "price_action_score":-5,
+    "rsi":45.21,
+    "macd":5.01,
+    "adx":24.83,
+    "atr":26.6,
+    "mfi":60.97,
+    "vwap":689.66,
+    "delivery_pct":57.1,
+    "revenue_qoq_growth":-0.52,
+    "profit_qoq_growth":60.77,
+    "revenue_consistency":"3\/6",
+    "profit_consistency":"5\/6",
+    "revenue_analysis":{
+      "values":[
+        1051.26,
+        1056.77,
+        1045.24,
+        1024.34,
+        966.4,
+        1019.94,
+        1075.02
+      ],
+      "qoq_changes":[
+        -0.5214001154,
+        1.1030959397,
+        2.040338169,
+        5.9954470199,
+        -5.2493283919,
+        -5.123625607
+      ],
+      "growth_count":3,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.5
+    },
+    "profit_analysis":{
+      "values":[
+        146.69,
+        138.29,
+        124.57,
+        109.53,
+        138.29,
+        124.57,
+        109.53
+      ],
+      "qoq_changes":[
+        6.0741919155,
+        11.0138877739,
+        13.7313977906,
+        -20.7968761299,
+        11.0138877739,
+        13.7313977906
+      ],
+      "growth_count":5,
+      "total_quarters":6,
+      "most_recent_decline_index":3,
+      "consistency_ratio":0.8333333333
+    },
+    "industry":"Specialty Chemicals",
+    "market_cap":10831.11,
+    "current_price":680.0,
+    "roce":10.99,
+    "pe_ratio":43.12,
+    "peg_ratio":1.16,
+    "promoter_holding":51.47,
+    "component_scores":{
+      "operating_profit":45.7808,
+      "operating_revenue":23.9792,
+      "peg_score":99.8405568034,
+      "market_cap_score":99.4439880303,
+      "margin_score":87.1294980263,
+      "pe_score":99.0939274848,
+      "promoter_score":51.9741492477
+    },
+    "nse_code_clean":"JUBLINGREA"
+  },
+  {
+    "symbol":"VIMTALABS",
+    "instrument_token":3353857,
+    "signal":true,
+    "latest_close":513.85,
+    "latest_high":528.9,
+    "latest_low":503.1,
+    "latest_range":25.8,
+    "weekly_open":484.0,
+    "monthly_open":487.5,
+    "volume_ema":241181.1264577482,
+    "latest_volume":296439.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"VIMTALABS",
+    "stock_name":"Vimta Labs Ltd.",
+    "nse_code":"VIMTALABS",
+    "composite_score":11.7855743946,
+    "technical_score":-14.15,
+    "enhanced_fundamental_score":59.9516411273,
+    "qss":-14.15,
+    "trade_recommendation":"WEAK SELL",
+    "signal_strength":"Moderate Bearish",
+    "momentum_score":-27,
+    "trend_score":-15.0,
+    "price_action_score":10,
+    "rsi":49.09,
+    "macd":-14.61,
+    "adx":10.22,
+    "atr":42.66,
+    "mfi":49.67,
+    "vwap":1008.32,
+    "delivery_pct":48.07,
+    "revenue_qoq_growth":6.69,
+    "profit_qoq_growth":39.85,
+    "revenue_consistency":"5\/6",
+    "profit_consistency":"5\/6",
+    "revenue_analysis":{
+      "values":[
+        94.44,
+        88.52,
+        83.14,
+        80.2,
+        80.1,
+        72.26,
+        82.19
+      ],
+      "qoq_changes":[
+        6.6877541798,
+        6.4710127496,
+        3.6658354115,
+        0.1248439451,
+        10.8497093828,
+        -12.0817617715
+      ],
+      "growth_count":5,
+      "total_quarters":6,
+      "most_recent_decline_index":5,
+      "consistency_ratio":0.8333333333
+    },
+    "profit_analysis":{
+      "values":[
+        33.04,
+        32.34,
+        28.94,
+        23.6,
+        32.34,
+        28.94,
+        23.6
+      ],
+      "qoq_changes":[
+        2.1645021645,
+        11.7484450587,
+        22.6271186441,
+        -27.0253555968,
+        11.7484450587,
+        22.6271186441
+      ],
+      "growth_count":5,
+      "total_quarters":6,
+      "most_recent_decline_index":3,
+      "consistency_ratio":0.8333333333
+    },
+    "industry":"Healthcare Services",
+    "market_cap":2221.72,
+    "current_price":998.4,
+    "roce":22.6,
+    "pe_ratio":33.89,
+    "peg_ratio":0.49,
+    "promoter_holding":36.7,
+    "component_scores":{
+      "operating_profit":44.944,
+      "operating_revenue":44.5176,
+      "peg_score":99.9334497962,
+      "market_cap_score":99.8859486319,
+      "margin_score":81.2854368172,
+      "pe_score":99.2880107829,
+      "promoter_score":37.0594769262
+    },
+    "nse_code_clean":"VIMTALABS"
+  },
+  {
+    "symbol":"SHAH",
+    "instrument_token":5195777,
+    "signal":true,
+    "latest_close":4.51,
+    "latest_high":4.51,
+    "latest_low":3.76,
+    "latest_range":0.75,
+    "weekly_open":3.05,
+    "monthly_open":3.13,
+    "volume_ema":2527444.5234157285,
+    "latest_volume":14100716.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"SHAH",
+    "stock_name":"Shah Metacorp Ltd.",
+    "nse_code":"SHAH",
+    "composite_score":11.3105121508,
+    "technical_score":-7.9,
+    "enhanced_fundamental_score":46.9871775738,
+    "qss":-7.9,
+    "trade_recommendation":"HOLD",
+    "signal_strength":"Neutral",
+    "momentum_score":-27,
+    "trend_score":-15.0,
+    "price_action_score":35,
+    "rsi":51.99,
+    "macd":-0.02,
+    "adx":31.79,
+    "atr":0.11,
+    "mfi":43.35,
+    "vwap":3.54,
+    "delivery_pct":72.19,
+    "revenue_qoq_growth":4.02,
+    "profit_qoq_growth":20.84,
+    "revenue_consistency":"4\/6",
+    "profit_consistency":"2\/6",
+    "revenue_analysis":{
+      "values":[
+        41.46,
+        39.86,
+        48.54,
+        46.29,
+        12.91,
+        21.33,
+        16.24
+      ],
+      "qoq_changes":[
+        4.0140491721,
+        -17.8821590441,
+        4.8606610499,
+        258.5592563904,
+        -39.4749179559,
+        31.342364532
+      ],
+      "growth_count":4,
+      "total_quarters":6,
+      "most_recent_decline_index":1,
+      "consistency_ratio":0.6666666667
+    },
+    "profit_analysis":{
+      "values":[
+        2.63,
+        2.3,
+        2.75,
+        3.45,
+        2.3,
+        2.75,
+        3.45
+      ],
+      "qoq_changes":[
+        14.347826087,
+        -16.3636363636,
+        -20.2898550725,
+        50.0,
+        -16.3636363636,
+        -20.2898550725
+      ],
+      "growth_count":2,
+      "total_quarters":6,
+      "most_recent_decline_index":1,
+      "consistency_ratio":0.3333333333
+    },
+    "industry":"Iron & Steel\/Interm.Products",
+    "market_cap":236.65,
+    "current_price":3.76,
+    "roce":5.76,
+    "pe_ratio":7.26,
+    "peg_ratio":0.01,
+    "promoter_holding":30.87,
+    "component_scores":{
+      "operating_profit":16.2836,
+      "operating_revenue":33.6108,
+      "peg_score":100,
+      "market_cap_score":99.9878516392,
+      "margin_score":93.0853562409,
+      "pe_score":99.8479715877,
+      "promoter_score":31.1723720085
+    },
+    "nse_code_clean":"SHAH"
+  },
+  {
+    "symbol":"LIQUIDADD",
+    "instrument_token":5992193,
+    "signal":true,
+    "latest_close":1077.1,
+    "latest_high":1077.12,
+    "latest_low":1077.08,
+    "latest_range":0.04,
+    "weekly_open":1076.23,
+    "monthly_open":1075.03,
+    "volume_ema":717611.0460197713,
+    "latest_volume":724736.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"LIQUIDADD",
+    "stock_name":"DSP BSE Liquid Rate ETF",
+    "nse_code":"LIQUIDADD",
+    "composite_score":8.5156972707,
+    "technical_score":8.55,
+    "enhanced_fundamental_score":8.451992202,
+    "qss":8.55,
+    "trade_recommendation":"HOLD",
+    "signal_strength":"Neutral",
+    "momentum_score":-16,
+    "trend_score":40.0,
+    "price_action_score":15,
+    "rsi":99.99,
+    "macd":1.61,
+    "adx":99.91,
+    "atr":0.3,
+    "mfi":100.0,
+    "vwap":1076.67,
+    "delivery_pct":90.03,
+    "revenue_qoq_growth":0.0,
+    "profit_qoq_growth":0.0,
+    "revenue_consistency":"0\/6",
+    "profit_consistency":"0\/6",
+    "revenue_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "profit_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "industry":"Others",
+    "market_cap":0.0,
+    "current_price":1076.66,
+    "roce":0.0,
+    "pe_ratio":0.0,
+    "peg_ratio":0.0,
+    "promoter_holding":0.0,
+    "component_scores":{
+      "operating_profit":0.0,
+      "operating_revenue":0.0,
+      "peg_score":0,
+      "market_cap_score":100,
+      "margin_score":69.0398440406,
+      "pe_score":0,
+      "promoter_score":0
+    },
+    "nse_code_clean":"LIQUIDADD"
+  },
+  {
+    "symbol":"GOLD360",
+    "instrument_token":7706881,
+    "signal":true,
+    "latest_close":98.6,
+    "latest_high":99.0,
+    "latest_low":97.35,
+    "latest_range":1.65,
+    "weekly_open":96.55,
+    "monthly_open":94.25,
+    "volume_ema":10912.6554868701,
+    "latest_volume":86253.0,
+    "range_breakout":true,
+    "bullish_candle":true,
+    "above_weekly_open":true,
+    "above_monthly_open":true,
+    "above_support":true,
+    "volume_above_ema":true,
+    "error":null,
+    "symbol_clean":"GOLD360",
+    "stock_name":"360 ONE Gold ETF",
+    "nse_code":"GOLD360",
+    "composite_score":8.2231972707,
+    "technical_score":8.1,
+    "enhanced_fundamental_score":8.451992202,
+    "qss":8.1,
+    "trade_recommendation":"HOLD",
+    "signal_strength":"Neutral",
+    "momentum_score":3,
+    "trend_score":10.0,
+    "price_action_score":15,
+    "rsi":55.71,
+    "macd":0.79,
+    "adx":29.69,
+    "atr":2.6,
+    "mfi":31.88,
+    "vwap":0.0,
+    "delivery_pct":91.77,
+    "revenue_qoq_growth":0.0,
+    "profit_qoq_growth":0.0,
+    "revenue_consistency":"0\/6",
+    "profit_consistency":"0\/6",
+    "revenue_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "profit_analysis":{
+      "values":[
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "qoq_changes":[
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "growth_count":0,
+      "total_quarters":6,
+      "most_recent_decline_index":0,
+      "consistency_ratio":0.0
+    },
+    "industry":"Others",
+    "market_cap":0.0,
+    "current_price":96.0,
+    "roce":0.0,
+    "pe_ratio":0.0,
+    "peg_ratio":0.0,
+    "promoter_holding":0.0,
+    "component_scores":{
+      "operating_profit":0.0,
+      "operating_revenue":0.0,
+      "peg_score":0,
+      "market_cap_score":100,
+      "margin_score":69.0398440406,
+      "pe_score":0,
+      "promoter_score":0
+    },
+    "nse_code_clean":"GOLD360"
+  }
+];
+        
+        let filteredData = [...companiesData];
+        let currentPage = 1;
+        let itemsPerPage = 50;
+        let sortColumn = 'composite_score';
+        let sortDirection = 'desc';
+        
+        function getScoreClass(score) {
+            if (score >= 80) return 'score-excellent';
+            if (score >= 60) return 'score-good';
+            if (score >= 40) return 'score-average';
+            if (score >= 20) return 'score-poor';
+            return 'score-bad';
+        }
+        
+        function getSignalClass(signal) {
+            if (signal.includes('BUY')) return 'signal-buy';
+            if (signal.includes('SELL')) return 'signal-sell';
+            return 'signal-hold';
+        }
+        
+        function formatNumber(num, decimals = 2) {
+            if (num === null || num === undefined || isNaN(num)) return 'N/A';
+            return parseFloat(num).toFixed(decimals);
+        }
+        
+        function formatLargeNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) return 'N/A';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toFixed(0);
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('companiesTableBody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = itemsPerPage === 'all' ? filteredData.length : startIndex + parseInt(itemsPerPage);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = pageData.map((company, index) => {
+                const globalRank = startIndex + index + 1;
+                return `
+                    <tr>
+                        <td class="rank">${globalRank}</td>
+                        <td><strong>${company.stock_name || 'N/A'}</strong></td>
+                        <td><strong>${company.nse_code || company.symbol}</strong></td>
+                        <td><span class="score ${getScoreClass(company.composite_score)}">${formatNumber(company.composite_score, 1)}</span></td>
+                        <td><span class="score ${getScoreClass(company.technical_score)}">${formatNumber(company.technical_score, 1)}</span></td>
+                        <td><span class="score ${getScoreClass(company.enhanced_fundamental_score)}">${formatNumber(company.enhanced_fundamental_score, 1)}</span></td>
+                        <td><span class="signal ${getSignalClass(company.trade_recommendation)}">${company.trade_recommendation}</span></td>
+                        <td>₹${formatNumber(company.latest_close)}</td>
+                        <td>₹${formatLargeNumber(company.market_cap)}</td>
+                        <td>${formatNumber(company.pe_ratio)}</td>
+                        <td>${formatNumber(company.revenue_growth)}%</td>
+                        <td>${formatNumber(company.promoter_holding)}%</td>
+                        <td><span class="breakout-badge">BREAKOUT</span></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            renderPagination();
+        }
+        
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            if (itemsPerPage === 'all') {
+                pagination.innerHTML = `<span class="page-info">Showing all ${filteredData.length} companies</span>`;
+                return;
+            }
+            
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
+            
+            let paginationHTML = `
+                <button class="page-btn" onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span class="page-info">Page ${currentPage} of ${totalPages} (Showing ${startItem}-${endItem} of ${filteredData.length} companies)</span>
+                <button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                <button class="page-btn" onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+        
+        function changePage(newPage) {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+        
+        function changeItemsPerPage() {
+            itemsPerPage = document.getElementById('itemsPerPage').value;
+            currentPage = 1;
+            renderTable();
+        }
+        
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const minScore = parseFloat(document.getElementById('minScore').value) || 0;
+            
+            filteredData = companiesData.filter(company => {
+                const matchesSearch = !searchTerm || 
+                    (company.stock_name && company.stock_name.toLowerCase().includes(searchTerm)) ||
+                    (company.nse_code && company.nse_code.toLowerCase().includes(searchTerm)) ||
+                    (company.symbol && company.symbol.toLowerCase().includes(searchTerm)) ||
+                    (company.industry && company.industry.toLowerCase().includes(searchTerm));
+                
+                const matchesScore = company.composite_score >= minScore;
+                
+                return matchesSearch && matchesScore;
+            });
+            
+            currentPage = 1;
+            renderTable();
+        }
+        
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'desc';
+            }
+            
+            filteredData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            currentPage = 1;
+            renderTable();
+        }
+        
+        function exportToCSV() {
+            const headers = [
+                'Rank', 'Company', 'NSE Code', 'Composite Score', 'QSS Score', 'Fundamental Score',
+                'Trade Signal', 'Price', 'Market Cap', 'PE Ratio', 'Revenue Growth', 'Promoter Holding'
+            ];
+            
+            let csvContent = headers.join(',') + '\n';
+            
+            filteredData.forEach((company, index) => {
+                const row = [
+                    index + 1,
+                    `"${company.stock_name || 'N/A'}"`,
+                    company.nse_code || company.symbol,
+                    formatNumber(company.composite_score, 1),
+                    formatNumber(company.technical_score, 1),
+                    formatNumber(company.enhanced_fundamental_score, 1),
+                    `"${company.trade_recommendation}"`,
+                    formatNumber(company.latest_close),
+                    formatNumber(company.market_cap, 0),
+                    formatNumber(company.pe_ratio),
+                    formatNumber(company.revenue_growth),
+                    formatNumber(company.promoter_holding)
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Breakout_Trendlyne_Analysis_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(filterData, 300);
+        });
+        
+        document.getElementById('itemsPerPage').addEventListener('change', changeItemsPerPage);
+        document.getElementById('minScore').addEventListener('input', filterData);
+        
+        // Initialize
+        renderTable();
+        console.log('🚀 Breakout + Trendlyne Combined Analysis Report loaded successfully');
+        console.log('Total companies with breakout signals: ' + companiesData.length);
+    </script>
+</body>
+</html>
